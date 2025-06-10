@@ -358,19 +358,28 @@
             const data = Object.fromEntries(formData);
             
             try {
+                // Create form data to avoid CORS preflight
+                const formDataToSend = new URLSearchParams();
+                Object.keys(data).forEach(key => {
+                    formDataToSend.append(key, data[key] || '');
+                });
+
                 const response = await fetch(WEBHOOK_URL, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: JSON.stringify(data)
+                    body: formDataToSend
                 });
                 
-                if (response.ok) {
+                console.log('Response status:', response.status);
+                
+                // Check for successful status codes (200-299)
+                if (response.status >= 200 && response.status < 300) {
                     successMessage.style.display = 'block';
                     this.reset(); // Clear form
                 } else {
-                    throw new Error('Submission failed');
+                    throw new Error(`Server responded with status: ${response.status}`);
                 }
             } catch (error) {
                 errorMessage.style.display = 'block';
